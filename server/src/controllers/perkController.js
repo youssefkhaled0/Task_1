@@ -63,13 +63,38 @@ export async function createPerk(req, res, next) {
     const doc = await Perk.create({ ...value});
     res.status(201).json({ perk: doc });
   } catch (err) {
-    if (err.code === 11000) return res.status(409).json({ message: 'Duplicate perk for this merchant' });
+    if (err.code === 11000)
+       return res.status(409).json({ message: 'Duplicate perk for this merchant' });
     next(err);
   }
 }
 // TODO
 // Update an existing perk by ID and validate only the fields that are being updated 
 export async function updatePerk(req, res, next) {
+  try {
+    
+    const { value, error } = perkSchema
+  .fork(Object.keys(perkSchema.describe().keys), field => field.optional())
+  .validate(req.body, { presence: "optional", noDefaults: true });
+
+
+      const perk = await Perk.findByIdAndUpdate(
+        req.params.id,
+        { ...value },
+        { new: true, runValidators: true } 
+      );
+  
+      console.log(perk);
+
+      if (!perk) return res.status(404).json({ message: 'Perk not found' });
+  
+      res.json({ perk });
+    } catch (err) {
+      if (err.code === 11000) {
+        return res.status(409).json({ message: 'Duplicate perk for this merchant' });
+      }
+      next(err);
+    }
   
 }
 
